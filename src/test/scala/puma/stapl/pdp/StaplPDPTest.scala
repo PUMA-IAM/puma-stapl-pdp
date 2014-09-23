@@ -23,7 +23,7 @@ class StaplPDPTest extends FunSuite {
       )
     }
     val decision = testpdp.evaluate(new Subject("subjectID"), new Object("objectID"), new Action("actionID"), new Environment()).getDecision()
-    assert(decision == PDPDecision.DENY)
+    assert(decision === PDPDecision.DENY)
   }
   
   test("a policy that always permits") {
@@ -33,7 +33,7 @@ class StaplPDPTest extends FunSuite {
       )
     }
     val decision = testpdp.evaluate(new Subject("subjectID"), new Object("objectID"), new Action("actionID"), new Environment()).getDecision()
-    assert(decision == PDPDecision.PERMIT)
+    assert(decision === PDPDecision.PERMIT)
   }
   
   test("a request that's not applicable") {
@@ -45,7 +45,7 @@ class StaplPDPTest extends FunSuite {
       )
     }
     val decision = testpdp.evaluate(new Subject("subjectID"), new Object("objectID"), new Action("actionID"), new Environment()).getDecision()
-    assert(decision == PDPDecision.NOT_APPLICABLE)
+    assert(decision === PDPDecision.NOT_APPLICABLE)
   }
   
   test("a request with an attribute missing") {
@@ -58,7 +58,7 @@ class StaplPDPTest extends FunSuite {
       )
     }
     val decision = testpdp.evaluate(new Subject("subjectID"), new Object("objectID"), new Action("actionID"), new Environment()).getDecision()
-    assert(decision == PDPDecision.INDETERMINATE)
+    assert(decision === PDPDecision.INDETERMINATE)
   }
   
   test("a request with an atomic attribute") {
@@ -73,7 +73,7 @@ class StaplPDPTest extends FunSuite {
     val subject = new Subject("subjectID")
     subject.addAttributeValue(new SubjectAttributeValue("name", Multiplicity.ATOMIC, "jasper"))
     val decision = testpdp.evaluate(subject, new Object("objectID"), new Action("actionID"), new Environment()).getDecision()
-    assert(decision == PDPDecision.PERMIT)
+    assert(decision === PDPDecision.PERMIT)
   }
   
   test("a request with a grouped attribute") {
@@ -92,24 +92,27 @@ class StaplPDPTest extends FunSuite {
     locations.addValue("there")
     env.addAttributeValue(locations)
     val decision = testpdp.evaluate(new Subject("subjectID"), new Object("objectID"), new Action("actionID"), env).getDecision()
-    assert(decision == PDPDecision.PERMIT)
+    assert(decision === PDPDecision.PERMIT)
   }
   
   test("a request with a DATETIME attribute") {
     val testpdp = new StaplPDP with BasicPolicy {
       val env = environment
       env.currentTime = SimpleAttribute(DateTime)
-      val millisago = new LocalDateTime().minusMillis(100)
-      val millisahead = new LocalDateTime().plusMillis(100)
+      val now = new LocalDateTime()
+      val millisago = now.minusMillis(100)
+      val millisahead = now.plusMillis(100)
       override val pdp = new PDP(
         Policy("test") := apply PermitOverrides to (
-          Rule("testrule") := permit iff ((millisago lt env.currentTime) & (millisahead gt env.currentTime))
+          Rule("testrule") := permit iff ((millisago lteq env.currentTime) & (millisahead gteq env.currentTime))
         )
       )
     }
     val env = new Environment()
     env.addAttributeValue(new EnvironmentAttributeValue("currentTime", Multiplicity.ATOMIC, new Date))
     val decision = testpdp.evaluate(new Subject("subjectID"), new Object("objectID"), new Action("actionID"), env).getDecision()
-    assert(decision == PDPDecision.PERMIT)
+    // if dates are converted back and forth in a correct way `env.currentTime` has 
+    // to be very close to `now` and the request will be permitted
+    assert(decision === PDPDecision.PERMIT)
   }
 }
