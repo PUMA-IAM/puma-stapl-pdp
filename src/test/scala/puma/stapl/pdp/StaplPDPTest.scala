@@ -18,7 +18,7 @@ class StaplPDPTest extends FunSuite {
   
   test("a policy that always denies") {
     val testpdp = new StaplPDP {
-      override val pdp = new PDP(
+      override lazy val pdp = new PDP(
         Rule("test") := deny
       )
     }
@@ -28,7 +28,7 @@ class StaplPDPTest extends FunSuite {
   
   test("a policy that always permits") {
     val testpdp = new StaplPDP {
-      override val pdp = new PDP(
+      override lazy val pdp = new PDP(
         Rule("test") := permit
       )
     }
@@ -38,7 +38,7 @@ class StaplPDPTest extends FunSuite {
   
   test("a request that's not applicable") {
     val testpdp = new StaplPDP with BasicPolicy {
-      override val pdp = new PDP(
+      override lazy val pdp = new PDP(
         Policy("test") := when (subject.id === "Unknown") apply PermitOverrides to (
           Rule("testrule") := permit
         )
@@ -51,7 +51,7 @@ class StaplPDPTest extends FunSuite {
   test("a request with an attribute missing") {
     val testpdp = new StaplPDP with BasicPolicy {
       subject.name = SimpleAttribute(String)
-      override val pdp = new PDP(
+      override lazy val pdp = new PDP(
         Policy("test") := when (subject.name === "Unknown") apply PermitOverrides to (
           Rule("testrule") := permit
         )
@@ -64,7 +64,7 @@ class StaplPDPTest extends FunSuite {
   test("a request with an atomic attribute") {
     val testpdp = new StaplPDP with BasicPolicy {
       subject.name = SimpleAttribute(String)
-      override val pdp = new PDP(
+      override lazy val pdp = new PDP(
         Policy("test") := when (subject.name === "jasper") apply PermitOverrides to (
           Rule("testrule") := permit
         )
@@ -79,7 +79,7 @@ class StaplPDPTest extends FunSuite {
   test("a request with a grouped attribute") {
     val testpdp = new StaplPDP with BasicPolicy {
       environment.locations = ListAttribute(String)
-      override val pdp = new PDP(
+      override lazy val pdp = new PDP(
         Policy("test") := apply PermitOverrides to (
           Rule("testrule") := permit iff ("testclass" in environment.locations)
         )
@@ -102,7 +102,7 @@ class StaplPDPTest extends FunSuite {
       val now = new LocalDateTime()
       val millisago = now.minusMillis(100)
       val millisahead = now.plusMillis(100)
-      override val pdp = new PDP(
+      override lazy val pdp = new PDP(
         Policy("test") := apply PermitOverrides to (
           Rule("testrule") := permit iff ((millisago lteq env.currentTime) & (millisahead gteq env.currentTime))
         )

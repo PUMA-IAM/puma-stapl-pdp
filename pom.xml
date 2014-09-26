@@ -42,6 +42,21 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+		<groupId>ch.qos.logback</groupId>
+		<artifactId>logback-classic</artifactId>
+		<version>1.1.2</version>
+	</dependency>
+	<dependency>
+		<groupId>org.clapper</groupId>
+		<artifactId>grizzled-slf4j_2.10</artifactId>
+		<version>1.0.2</version>
+	</dependency>
+	<dependency>
+		<groupId>org.clapper</groupId>
+		<artifactId>grizzled-scala_2.10</artifactId>
+		<version>1.2</version>
+	</dependency>
+    <dependency>
     	<groupId>puma</groupId>
     	<artifactId>puma-pep-utils</artifactId>
     	<version>0.0.1-SNAPSHOT</version>
@@ -50,6 +65,11 @@
     	<groupId>stapl</groupId>
     	<artifactId>stapl-core</artifactId>
     	<version>0.0.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+    	<groupId>puma</groupId>
+    	<artifactId>puma-pip-utils</artifactId>
+    	<version>1.0</version>
     </dependency>
   </dependencies>
 
