@@ -18,9 +18,9 @@ class SubjectAttributeFinderModule extends AttributeFinderModule {
     if(cType == SUBJECT)
       if(multiValued)
         aType match {
-          case String => Some(asScalaSet(db.getStringAttribute(ctx.subjectId, name)).toSeq)
-          case Bool => Some(db.getBooleanAttribute(ctx.subjectId, name).map(_.asInstanceOf[Boolean]).toSeq)
-          case Number => Some(db.getIntegerAttribute(ctx.subjectId, name).map(_.asInstanceOf[Int]).toSeq)
+          case String => Some(db.getStringAttribute(ctx.subjectId, name).toSeq)
+          case Bool => Some(db.getBooleanAttribute(ctx.subjectId, name).toSeq.asInstanceOf[Seq[Boolean]])
+          case Number => Some(db.getIntegerAttribute(ctx.subjectId, name).toSeq.asInstanceOf[Seq[Int]])
           case DateTime => Some(db.getDateAttribute(ctx.subjectId, name).map(date => new LocalDateTime(date.asInstanceOf[Date])).toSeq)
           case _ => None
         }
