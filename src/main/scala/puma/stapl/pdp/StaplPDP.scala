@@ -25,7 +25,12 @@ import grizzled.slf4j.Logging
 class StaplPDP extends PDP with Logging /* TODO don't inherit BasicPolicy in final version */ with BasicPolicy {
   
   // TODO preliminary implementation
-  protected lazy val pdp: InternalPDP = new InternalPDP({
+  protected def pdp = _pdp
+  
+  // Implemented as a lazy val so `pdp` can be overridden in test cases without `_pdp` being initialized.
+  // Apparently vals get initialized even when they're overridden in a subclass and the subclass in instantiated.
+  // This causes problems in test cases because the SubjectAttributeFinderModule tries to set up a DB connection.
+  private lazy val _pdp: InternalPDP = new InternalPDP({
     resource.type_ = SimpleAttribute("type", String)
     resource.creating_tenant = SimpleAttribute("creating-tenant", String)
     resource.owning_tenant = SimpleAttribute("owning-tenant", String)
