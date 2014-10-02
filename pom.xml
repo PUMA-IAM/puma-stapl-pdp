@@ -68,9 +68,14 @@
     </dependency>
     <dependency>
     	<groupId>puma</groupId>
-    	<artifactId>puma-pip-utils</artifactId>
-    	<version>1.0</version>
+    	<artifactId>puma-central-puma-pdp-rmi-utils</artifactId>
+    	<version>0.0.1-SNAPSHOT</version>
     </dependency>
+    <dependency>
+		<groupId>org.apache.thrift</groupId>
+		<artifactId>libthrift</artifactId>
+		<version>0.9.1</version>
+	</dependency>
   </dependencies>
 
   <build>

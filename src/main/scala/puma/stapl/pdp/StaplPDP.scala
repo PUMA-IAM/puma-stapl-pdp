@@ -18,66 +18,29 @@ import puma.peputils.AttributeValueCollection
 import puma.peputils.attributes.AttributeValue
 import stapl.core.pdp.AttributeFinder
 import grizzled.slf4j.Logging
+import stapl.core.DenyOverrides
+import stapl.core.pdp.RemoteEvaluator
 
 /**
  * An adapter class from stapl.core.pdp.PDP to puma.peputils.PDP
  */
-class StaplPDP extends PDP with Logging /* TODO don't inherit BasicPolicy in final version */ with BasicPolicy {
+class StaplPDP extends PDP with Logging {
   
   // TODO preliminary implementation
-  protected def pdp = _pdp
+  protected def pdp: InternalPDP = _pdp
   
   // Implemented as a lazy val so `pdp` can be overridden in test cases without `_pdp` being initialized.
   // Apparently vals get initialized even when they're overridden in a subclass and the subclass in instantiated.
   // This causes problems in test cases because the SubjectAttributeFinderModule tries to set up a DB connection.
-  private lazy val _pdp: InternalPDP = new InternalPDP({
-    resource.type_ = SimpleAttribute("type", String)
-    resource.creating_tenant = SimpleAttribute("creating-tenant", String)
-    resource.owning_tenant = SimpleAttribute("owning-tenant", String)
-    subject.tenant = ListAttribute(String)
-    subject.assigned_tenants = ListAttribute("subject:assigned_tenants", String)
-    subject.region = ListAttribute("subject:region", String)
-    
-    val centralPolicy =
-      Policy("central-puma-policy") := when (resource.type_ === "document") apply DenyOverrides to(
-        Policy("reading-deleting") := when (action.id === "read" | action.id === "delete") apply DenyOverrides to(
-          Rule("1") := deny iff (!(resource.creating_tenant in subject.tenant)),
-          Rule("default-permit:1") := permit
-        ),
-        Policy("creating") := when (action.id === "create") apply DenyOverrides to(
-          Rule("default-permit:99") := permit
-        )
-      )
-    
-    val tenant3 =
-      Policy("tenantsetid:3") := when ("3" in subject.tenant) apply DenyOverrides to(
-        Policy("large-bank:read") := when (action.id === "read" & resource.type_ === "document") apply PermitOverrides to(
-          Rule("191") := permit iff (resource.owning_tenant in subject.assigned_tenants),
-          Rule("193") := deny
-        ),
-        Policy("large-bank:send") := when (action.id === "send" & resource.type_ === "document") apply PermitOverrides to(
-          Rule("193") := permit
-        )
-      )
-    
-    val tenant4 =
-      Policy("tenantsetid:4") := when ("4" in subject.tenant) apply DenyOverrides to(
-        Policy("press-agency") := apply DenyOverrides to(
-          Rule("press-agency:1") := deny iff (!("Europe" in subject.region)),
-          Rule("press-agency:2") := permit
-        )
-      )
-    
-    Policy("global-puma-policy") := apply DenyOverrides to (
-      centralPolicy,
-      tenant3,
-      tenant4
+  private lazy val _pdp = new InternalPDP({
+    Policy("application-policy") := apply DenyOverrides to (
+      RemotePolicy("central-puma-policy")
     )
-  }, 
+  },
   {
-    val finder = new AttributeFinder
-    finder += new SubjectAttributeFinderModule
-    finder
+    val evaluator = new RemoteEvaluator
+    evaluator += new CentralPolicyRemoteEvaluatorModule
+    evaluator
   })
   
   override final def evaluate(subject: Subject, obj: Object, action: Action, environment: Environment): PDPResult =
@@ -103,19 +66,19 @@ class StaplPDP extends PDP with Logging /* TODO don't inherit BasicPolicy in fin
 	      request.allAttributes += (value.getIdWithoutPrefix(), cType) -> (
 	        if (value.getMultiplicity() == Multiplicity.ATOMIC)
 	          value.getDataType() match {
+              case DataType.String => value.getValues().head.asInstanceOf[String]
 	            case DataType.Boolean => value.getValues().head.asInstanceOf[Boolean]
 	            case DataType.Double => value.getValues().head.asInstanceOf[Double]
 	            case DataType.Integer => value.getValues().head.asInstanceOf[Int]
-	            case DataType.String => value.getValues().head.asInstanceOf[String]
-	            case DataType.DateTime => new LocalDateTime(value.getValues().head.asInstanceOf[Date])
+	            case DataType.DateTime => new LocalDateTime(value.getValues().head)
 	          }
 	        else
 	          value.getDataType() match {
-	            case DataType.Boolean => value.getValues().map(_.asInstanceOf[Boolean]).toSeq
-	            case DataType.Double => value.getValues().map(_.asInstanceOf[Double]).toSeq
-	            case DataType.Integer => value.getValues().map(_.asInstanceOf[Int]).toSeq
-	            case DataType.String => value.getValues().map(_.asInstanceOf[String]).toSeq
-	            case DataType.DateTime => value.getValues().map(date => new LocalDateTime(date.asInstanceOf[Date])).toSeq
+              case DataType.String => value.getValues().toSeq.asInstanceOf[Seq[String]]
+	            case DataType.Boolean => value.getValues().toSeq.asInstanceOf[Seq[Boolean]]
+	            case DataType.Double => value.getValues().toSeq.asInstanceOf[Seq[Double]]
+	            case DataType.Integer => value.getValues().toSeq.asInstanceOf[Seq[Int]]
+	            case DataType.DateTime => value.getValues().map(date => new LocalDateTime(date)).toSeq
 	          })
 	    }
     }
