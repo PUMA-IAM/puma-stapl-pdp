@@ -34,6 +34,7 @@ import stapl.core.ENVIRONMENT
 import stapl.core.ACTION
 import puma.thrift.pdp.MultiplicityP
 import stapl.core.DateTimeImpl
+import org.apache.thrift.TException
 
 object CentralPolicyRemoteEvaluatorModule {
   
@@ -98,7 +99,21 @@ class CentralPolicyRemoteEvaluatorModule extends RemoteEvaluatorModule with Logg
         error("The RMI connection to the remote PUMA PDP was not set up => default deny")
         Some(Deny)
       } else {
-        val result = client.evaluateP(getAttributeValuePs(ctx))
+        val result = try {
+          client.evaluateP(getAttributeValuePs(ctx))
+        } catch {
+          case e: TException => 
+            warn("TException when contacting the remote PUMA PDP, trying to set up connection again", e)
+            resetCentralPUMAPDPConnection()
+            setupCentralPUMAPDPConnection()
+            try {
+              client.evaluateP(getAttributeValuePs(ctx))
+            } catch {
+              case e: TException => 
+                warn("Again TException when contacting the remote PUMA PDP => default deny", e)
+                ResponseTypeP.DENY
+            }
+        }
         result match {
           case ResponseTypeP.DENY => Some(Deny)
           case ResponseTypeP.PERMIT => Some(Permit)
