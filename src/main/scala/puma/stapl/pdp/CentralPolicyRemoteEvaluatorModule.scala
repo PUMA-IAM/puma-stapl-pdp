@@ -118,7 +118,7 @@ class CentralPolicyRemoteEvaluatorModule extends RemoteEvaluatorModule with Logg
           case ResponseTypeP.DENY => Some(Deny)
           case ResponseTypeP.PERMIT => Some(Permit)
           case ResponseTypeP.NOT_APPLICABLE => Some(NotApplicable)
-          case ResponseTypeP.INDETERMINATE => sys.error("Result was indeterminate")
+          case ResponseTypeP.INDETERMINATE => sys.error(s"""Result of remote policy with id "$policyId" was indeterminate""")
         }
       }
     }
