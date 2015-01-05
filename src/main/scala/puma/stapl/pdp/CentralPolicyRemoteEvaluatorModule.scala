@@ -35,12 +35,14 @@ import stapl.core.ACTION
 import puma.thrift.pdp.MultiplicityP
 import stapl.core.DateTimeImpl
 import org.apache.thrift.TException
+import stapl.core.SimpleAttribute
+import stapl.core.ListAttribute
 
 object CentralPolicyRemoteEvaluatorModule {
   
   private val CENTRAL_PUMA_PDP_HOST = "puma-central-puma-pdp";
 
-  private val CENTRAL_PUMA_PDP_THRIFT_PORT = 9091;
+  private val CENTRAL_PUMA_PDP_THRIFT_PORT = 9071;
 }
 
 class CentralPolicyRemoteEvaluatorModule extends RemoteEvaluatorModule with Logging {
@@ -128,25 +130,29 @@ class CentralPolicyRemoteEvaluatorModule extends RemoteEvaluatorModule with Logg
   private def getAttributeValuePs(ctx: EvaluationCtx): java.util.List[AttributeValueP] = {
     import scala.collection.JavaConverters._
     
-    (for(((name, cType), value) <- ctx.attributes) yield {
-      val valueP = new AttributeValueP(getDataTypeP(value), toObjectTypeP(cType), getMultiplicity(value), name)
-      if (valueP.getMultiplicity() == MultiplicityP.ATOMIC)
-        valueP.getDataType() match {
-          case DataTypeP.STRING => valueP.addToStringValues(value.representation.asInstanceOf[String])
-          case DataTypeP.BOOLEAN => valueP.addToBooleanValues(value.representation.asInstanceOf[Boolean])
-          case DataTypeP.DOUBLE => valueP.addToDoubleValues(value.representation.asInstanceOf[Double])
-          case DataTypeP.INTEGER => valueP.addToIntValues(value.representation.asInstanceOf[Long].toInt)
-          case DataTypeP.DATETIME => valueP.addToDatetimeValues(value.asInstanceOf[DateTimeImpl].dt.toDate.getTime())
-        }
-      else
-        valueP.getDataType() match {
-          case DataTypeP.STRING => valueP.setStringValues(value.representation.asInstanceOf[Seq[String]].asJava)
-          case DataTypeP.BOOLEAN => valueP.setBooleanValues(value.representation.asInstanceOf[Seq[java.lang.Boolean]].asJava)
-          case DataTypeP.DOUBLE => valueP.setDoubleValues(value.representation.asInstanceOf[Seq[java.lang.Double]].asJava)
-          case DataTypeP.INTEGER => valueP.setIntValues(value.representation.asInstanceOf[Seq[java.lang.Number]].map(_.intValue).asJava.asInstanceOf[java.util.List[java.lang.Integer]]) // sigh...
-          case DataTypeP.DATETIME => valueP.setDatetimeValues(value.representation.asInstanceOf[Seq[DateTimeImpl]].map(_.dt.toDate.getTime()).asJava.asInstanceOf[java.util.List[java.lang.Long]]) // :'(
-        }
-      valueP
+    (for((attribute, value) <- ctx.cachedAttributes.toSeq) yield {
+      attribute match {
+        case SimpleAttribute(cType, name, aType) =>
+          val valueP = new AttributeValueP(getDataTypeP(value), toObjectTypeP(cType), getMultiplicity(value), name)
+          valueP.getDataType() match {
+            case DataTypeP.STRING => valueP.addToStringValues(value.representation.asInstanceOf[String])
+            case DataTypeP.BOOLEAN => valueP.addToBooleanValues(value.representation.asInstanceOf[Boolean])
+            case DataTypeP.DOUBLE => valueP.addToDoubleValues(value.representation.asInstanceOf[Double])
+            case DataTypeP.INTEGER => valueP.addToIntValues(value.representation.asInstanceOf[Long].toInt)
+            case DataTypeP.DATETIME => valueP.addToDatetimeValues(value.asInstanceOf[DateTimeImpl].dt.toDate.getTime())
+          }
+          valueP
+        case ListAttribute(cType, name, aType) =>
+          val valueP = new AttributeValueP(getDataTypeP(value), toObjectTypeP(cType), getMultiplicity(value), name)
+          valueP.getDataType() match {
+            case DataTypeP.STRING => valueP.setStringValues(value.representation.asInstanceOf[Seq[String]].asJava)
+            case DataTypeP.BOOLEAN => valueP.setBooleanValues(value.representation.asInstanceOf[Seq[java.lang.Boolean]].asJava)
+            case DataTypeP.DOUBLE => valueP.setDoubleValues(value.representation.asInstanceOf[Seq[java.lang.Double]].asJava)
+            case DataTypeP.INTEGER => valueP.setIntValues(value.representation.asInstanceOf[Seq[java.lang.Number]].map(_.intValue).asJava.asInstanceOf[java.util.List[java.lang.Integer]]) // sigh...
+            case DataTypeP.DATETIME => valueP.setDatetimeValues(value.representation.asInstanceOf[Seq[DateTimeImpl]].map(_.dt.toDate.getTime()).asJava.asInstanceOf[java.util.List[java.lang.Long]]) // :'(
+          }
+          valueP
+      }
     }).asJava
   }
   
