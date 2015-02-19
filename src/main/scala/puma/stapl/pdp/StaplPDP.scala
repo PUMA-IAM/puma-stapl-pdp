@@ -44,9 +44,9 @@ class StaplPDP(policyDir: String) extends PDP with PEP with ApplicationPDPMgmtRe
   override final def evaluate(subject: Subject, obj: Object, action: Action, environment: Environment): PDPResult =
     try{
       pdp.evaluate(convert(subject, obj, action, environment)) match {
-        case Result(Permit, _) => new PDPResult(PDPDecision.PERMIT, "ok")
-        case Result(Deny, _) => new PDPResult(PDPDecision.DENY, "ok")
-        case Result(NotApplicable, _) => new PDPResult(PDPDecision.NOT_APPLICABLE, "ok")
+        case Result(Permit, _, _) => new PDPResult(PDPDecision.PERMIT, "ok")
+        case Result(Deny, _, _) => new PDPResult(PDPDecision.DENY, "ok")
+        case Result(NotApplicable, _, _) => new PDPResult(PDPDecision.NOT_APPLICABLE, "ok")
       }
     } catch {
       case e: Exception => 
