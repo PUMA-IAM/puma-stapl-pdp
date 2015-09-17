@@ -71,8 +71,13 @@
 		<version>2.4</version>
 	</dependency>
     <dependency>
-    	<groupId>puma</groupId>
-    	<artifactId>puma-stapl-centralpdp</artifactId>
+		<groupId>puma</groupId>
+		<artifactId>puma-rest-utils</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</dependency>
+    <dependency>
+    	<groupId>stapl</groupId>
+    	<artifactId>stapl-parser</artifactId>
     	<version>0.0.1-SNAPSHOT</version>
     </dependency>
   </dependencies>
